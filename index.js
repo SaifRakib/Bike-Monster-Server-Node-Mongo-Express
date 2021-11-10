@@ -33,6 +33,7 @@ async function run() {
     await client.connect();
     const database = client.db("monsterBike");
     const productCollection = database.collection("bikeItem");
+    const orderCollection = database.collection("orderItem");
 
     // add services
     app.post("/addProduct", async (req, res) => {
@@ -46,6 +47,21 @@ async function run() {
       const allProduct = await productCollection.find({}).toArray();
 
       res.json(allProduct);
+    });
+
+    // GET Single Service
+    app.get("/allProduct/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const product = await productCollection.findOne(query);
+      res.json(product);
+    });
+
+    // Get order information
+    app.post("/order", async (req, res) => {
+      const result = await orderCollection.insertOne(req.body);
+      res.json(result);
+      console.log(result);
     });
   } finally {
     //   await client.close();
