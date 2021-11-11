@@ -34,22 +34,31 @@ async function run() {
     const database = client.db("monsterBike");
     const productCollection = database.collection("bikeItem");
     const orderCollection = database.collection("orderItem");
+    const usersCollection = database.collection("users");
 
-    // add services
+    // add Product
     app.post("/addProduct", async (req, res) => {
       const result = await productCollection.insertOne(req.body);
       console.log(result);
       res.json(result);
     });
 
-    //  Get all services
+    //  Get all Product
     app.get("/allProduct", async (req, res) => {
       const allProduct = await productCollection.find({}).toArray();
 
       res.json(allProduct);
     });
+    // Delete Product
+    app.delete("/deleteProduct/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await productCollection.deleteOne(query);
+      res.json(result);
+      console.log(result);
+    });
 
-    // GET Single Service
+    // GET Single Product
     app.get("/allProduct/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
@@ -99,6 +108,61 @@ async function run() {
       const result = await orderCollection.deleteOne(query);
       res.json(result);
       console.log(result);
+    });
+
+    // Insert user
+    app.post("/users", async (req, res) => {
+      const user = req.body;
+      const result = await usersCollection.insertOne(user);
+      console.log(result);
+      res.json(result);
+    });
+
+    // update user
+    app.put("/users", async (req, res) => {
+      const user = req.body;
+      const filter = { email: user.email };
+      const options = { upsert: true };
+      const updateDoc = { $set: user };
+      const result = await usersCollection.updateOne(
+        filter,
+        updateDoc,
+        options
+      );
+      res.json(result);
+    });
+
+    // Find user
+    app.get("/users/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      let isAdmin = false;
+      if (user?.role === "admin") {
+        isAdmin = true;
+      }
+      res.json({ admin: isAdmin });
+    });
+
+    // make admin
+    app.put("/users/admin", async (req, res) => {
+      const user = req.body;
+      const requester = req.decodedEmail;
+      if (requester) {
+        const requesterAccount = await usersCollection.findOne({
+          email: requester,
+        });
+        if (requesterAccount.role === "admin") {
+          const filter = { email: user.email };
+          const updateDoc = { $set: { role: "admin" } };
+          const result = await usersCollection.updateOne(filter, updateDoc);
+          res.json(result);
+        }
+      } else {
+        res
+          .status(403)
+          .json({ message: "you do not have access to make admin" });
+      }
     });
   } finally {
     //   await client.close();
