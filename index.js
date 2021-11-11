@@ -35,6 +35,7 @@ async function run() {
     const productCollection = database.collection("bikeItem");
     const orderCollection = database.collection("orderItem");
     const usersCollection = database.collection("users");
+    const reviewCollection = database.collection("review");
 
     // add Product
     app.post("/addProduct", async (req, res) => {
@@ -76,9 +77,21 @@ async function run() {
     //  Get all Orders
     app.get("/orders", async (req, res) => {
       const allOrders = await orderCollection.find({}).toArray();
-
       res.json(allOrders);
     });
+
+    // Get all order by email
+    app.get("/myorders", async (req, res) => {
+      let query = {};
+      const email = req.query.email;
+      if (email) {
+        query = { email: email };
+      }
+      const cursor = orderCollection.find(query);
+      const orders = await cursor.toArray();
+      res.json(orders);
+    });
+
     //UPDATE API
     app.put("/updateOrder/:id", async (req, res) => {
       const id = req.params.id;
@@ -147,22 +160,24 @@ async function run() {
     // make admin
     app.put("/users/admin", async (req, res) => {
       const user = req.body;
-      const requester = req.decodedEmail;
-      if (requester) {
-        const requesterAccount = await usersCollection.findOne({
-          email: requester,
-        });
-        if (requesterAccount.role === "admin") {
-          const filter = { email: user.email };
-          const updateDoc = { $set: { role: "admin" } };
-          const result = await usersCollection.updateOne(filter, updateDoc);
-          res.json(result);
-        }
-      } else {
-        res
-          .status(403)
-          .json({ message: "you do not have access to make admin" });
-      }
+      const filter = { email: user.email };
+      const updateDoc = { $set: { role: "admin" } };
+      const result = await usersCollection.updateOne(filter, updateDoc);
+      res.json(result);
+    });
+
+    // Review add
+    app.post("/addReview", async (req, res) => {
+      const result = await reviewCollection.insertOne(req.body);
+      console.log(result);
+      res.json(result);
+    });
+
+    //  Get all review
+    app.get("/allReview", async (req, res) => {
+      const allReview = await reviewCollection.find({}).toArray();
+
+      res.json(allReview);
     });
   } finally {
     //   await client.close();
