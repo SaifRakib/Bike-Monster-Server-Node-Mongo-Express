@@ -71,7 +71,6 @@ async function run() {
     app.post("/order", async (req, res) => {
       const result = await orderCollection.insertOne(req.body);
       res.json(result);
-      console.log(result);
     });
 
     //  Get all Orders
@@ -92,15 +91,14 @@ async function run() {
       res.json(orders);
     });
 
-    //UPDATE API
+    //update approve status
     app.put("/updateOrder/:id", async (req, res) => {
       const id = req.params.id;
-      const updatedOrder = req.body;
       const filter = { _id: ObjectId(id) };
       const options = { upsert: true };
       const updateDoc = {
         $set: {
-          status: updatedOrder.status,
+          status: "Approved",
         },
       };
 
@@ -111,7 +109,7 @@ async function run() {
       );
       console.log("updating", id);
       res.json(result);
-      console.log(req.body.status);
+      console.log(result);
     });
 
     // Delete order
@@ -120,14 +118,12 @@ async function run() {
       const query = { _id: ObjectId(id) };
       const result = await orderCollection.deleteOne(query);
       res.json(result);
-      console.log(result);
     });
 
     // Insert user
     app.post("/users", async (req, res) => {
       const user = req.body;
       const result = await usersCollection.insertOne(user);
-      console.log(result);
       res.json(result);
     });
 
