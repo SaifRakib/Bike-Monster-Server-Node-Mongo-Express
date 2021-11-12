@@ -98,7 +98,7 @@ async function run() {
       const options = { upsert: true };
       const updateDoc = {
         $set: {
-          status: "Approved",
+          status: "Shipped",
         },
       };
 
